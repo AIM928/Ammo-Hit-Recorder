@@ -1,0 +1,76 @@
+name: Publish verified recorder v0.1.11
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-0.1.11.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recorder-release-v0.1.11
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'AIM928/Ammo-Hit-Recorder'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      SOURCE_COMMIT: d85e01d9c4036dcfa129e393a38c7bea549482b9
+      DLL_SHA256: 509EC9DEDE88AF95DDC9CBE04AABC6040052B3B64B4B228E2FFF074E7C34CFDE
+      SOURCE_SHA256: C167CD5592DD53BA668F74AE34899962C7360C0899C2CF5A456FB60701111776
+    steps:
+      - name: Verify assets, create draft, verify uploads, publish prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_COMMIT: ${{ github.sha }}
+          RELEASE_NOTES: |
+            ## Player Ammo Hit Recorder v0.1.11
+
+            Experimental build. May cause stuttering or reduced game performance. Full gameplay compatibility has not been verified.
+
+            - In-game display name: Player Ammo Hit Recorder (the AIM prefix has been removed).
+            - Chinese by default; English and automatic language selection remain available.
+            - Records first-contact distance, angle, speed and observed native component penetration decisions.
+            - Source, build scripts and managed tests are included. No license is granted at this time.
+
+            ### Installation
+            Close the game, back up your existing recorder DLL, then place AIMAmmoHitRecorder.dll in Bin/Mods. Keep only one active copy. Requires compatible existing MelonLoader/Harmony. Audited against GHPC 0.1.0-alpha+20261002 and MelonLoader 0.7.3 (net35); other builds are unverified.
+
+            ### Language
+            After the first run, close the game and edit Bin/UserData/MelonPreferences.cfg. Under [AIMAmmoHitRecorder], set Language = "zh", "en", or "auto", then restart. Console language only; CSV format is unchanged.
+
+            DLL SHA256: 509EC9DEDE88AF95DDC9CBE04AABC6040052B3B64B4B228E2FFF074E7C34CFDE
+            Source ZIP SHA256: C167CD5592DD53BA668F74AE34899962C7360C0899C2CF5A456FB60701111776
+        run: |
+          set -euo pipefail
+          if gh release view v0.1.11 --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists. Refusing to overwrite or delete it.'
+            exit 1
+          fi
+          asset_dir="$RUNNER_TEMP/recorder-v0.1.11"
+          verify_dir="$RUNNER_TEMP/recorder-v0.1.11-verify"
+          mkdir -p "$asset_dir" "$verify_dir"
+          dll_file="$asset_dir/AIMAmmoHitRecorder.dll"
+          zip_file="$asset_dir/Player-Ammo-Hit-Recorder-0.1.11-source.zip"
+          gh api "repos/$GITHUB_REPOSITORY/contents/AIMAmmoHitRecorder.dll?ref=$SOURCE_COMMIT" --jq .content | base64 --decode > "$dll_file"
+          gh api "repos/$GITHUB_REPOSITORY/contents/release-assets/Player-Ammo-Hit-Recorder-0.1.11-source.zip?ref=$ASSET_COMMIT" --jq .content | base64 --decode > "$zip_file"
+          echo "$DLL_SHA256  $dll_file" | sha256sum --check
+          echo "$SOURCE_SHA256  $zip_file" | sha256sum --check
+          gh release create v0.1.11 "$dll_file" "$zip_file" \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_COMMIT" \
+            --title 'Player Ammo Hit Recorder v0.1.11 (Experimental)' \
+            --notes "$RELEASE_NOTES" --draft --prerelease --latest=false
+          gh release download v0.1.11 --repo "$GITHUB_REPOSITORY" --dir "$verify_dir" \
+            --pattern AIMAmmoHitRecorder.dll --pattern Player-Ammo-Hit-Recorder-0.1.11-source.zip
+          echo "$DLL_SHA256  $verify_dir/AIMAmmoHitRecorder.dll" | sha256sum --check
+          echo "$SOURCE_SHA256  $verify_dir/Player-Ammo-Hit-Recorder-0.1.11-source.zip" | sha256sum --check
+          gh release edit v0.1.11 --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
+          gh release view v0.1.11 --repo "$GITHUB_REPOSITORY" --json url,isDraft,isPrerelease,assets

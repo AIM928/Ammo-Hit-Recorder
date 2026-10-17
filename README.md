@@ -1,4 +1,4 @@
-# AIM Player Ammo Hit Recorder
+#  Player Ammo Hit Recorder
 
 ## v0.1.10 — Experimental
 

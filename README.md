@@ -18,7 +18,7 @@ Readings are observations of the game's native decisions, not a guaranteed maxim
 
 ### Installation
 
-Audited against GHPC `0.1.0-alpha+20261002` with MelonLoader `0.7.3` (`net35`). Other game builds have not been verified. Existing MelonLoader/Harmony is required; no M8, M1A1, Pact or LOSAT vehicle MOD is required.
+Audited against GHPC `0.1.0-alpha+20261002` with MelonLoader `0.7.3` (`net35`). Other game builds have not been verified. Existing MelonLoader/Harmony is required;
 
 1. Close the game normally.
 2. Back up any existing `AIMAmmoHitRecorder.dll` and place this DLL in `Bin/Mods`.

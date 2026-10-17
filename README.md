@@ -1,10 +1,10 @@
 #  Player Ammo Hit Recorder
 
-## v0.1.11 — Experimental
+## v0.1.11
 
 Records accepted impacts from ammunition fired by the player-controlled vehicle. Each original shot produces one console message containing a staged contact table and one local CSV record. Shots with no accepted contact do not produce a record.
 
-**Experimental build. May cause stuttering or reduced game performance. Full gameplay compatibility has not been verified.**
+**May cause stuttering or reduced game performance. Full gameplay compatibility has not been verified.**
 
 ### Features
 

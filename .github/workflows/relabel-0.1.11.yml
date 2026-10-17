@@ -1,0 +1,42 @@
+name: Remove v0.1.11 experimental label
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/relabel-0.1.11.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: recorder-release-v0.1.11
+  cancel-in-progress: false
+
+jobs:
+  relabel:
+    if: github.repository == 'AIM928/Ammo-Hit-Recorder'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Update release label only; preserve assets and warnings
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          endpoint="repos/$GITHUB_REPOSITORY/releases/tags/v0.1.11"
+          test "$(gh api "$endpoint" --jq .id)" = 415850803
+          test "$(gh api "$endpoint" --jq .draft)" = false
+          before_assets="$(gh api "$endpoint" --jq '[.assets[] | {id,name,size,digest}] | sort_by(.id) | tojson')"
+          notes="$(gh api "$endpoint" --jq '.body | sub("Experimental build\\. "; "")')"
+          gh release edit v0.1.11 --repo "$GITHUB_REPOSITORY" \
+            --title 'Player Ammo Hit Recorder v0.1.11' \
+            --notes "$notes" --prerelease=false --latest
+          after_assets="$(gh api "$endpoint" --jq '[.assets[] | {id,name,size,digest}] | sort_by(.id) | tojson')"
+          test "$before_assets" = "$after_assets"
+          test "$(gh api "$endpoint" --jq .prerelease)" = false
+          gh release view v0.1.11 --repo "$GITHUB_REPOSITORY" --json url,name,isPrerelease,isDraft,assets
